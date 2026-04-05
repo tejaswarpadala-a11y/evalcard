@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVALCARD — LLM Output Scorer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #070911;
+  --bg2:      #0d0f18;
+  --bg3:      #12151f;
+  --border:   #1e2135;
+  --border2:  #2a2f4a;
+  --text:     #dde1f0;
+  --muted:    #5a6080;
+  --muted2:   #8890b0;
+  --amber:    #f5a623;
+  --amber-d:  rgba(245,166,35,0.12);
+  --amber-g:  rgba(245,166,35,0.35);
+  --cyan:     #38c9e8;
+  --cyan-d:   rgba(56,201,232,0.10);
+  --green:    #3dd68c;
+  --green-d:  rgba(61,214,140,0.10);
+  --red:      #f26060;
+  --red-d:    rgba(242,96,96,0.10);
+  --purple:   #9b7bff;
+  --purple-d: rgba(155,123,255,0.10);
+  --sans:     'Syne', sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --serif:    'Lora', Georgia, serif;
+  --radius:   10px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* BACKGROUND GRID */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(56,201,232,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,201,232,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+header {
+  padding: 48px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.header-inner {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 24px;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+}
+
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--amber-d); border: 1px solid var(--amber-g);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; font-weight: 600;
+  color: var(--amber); letter-spacing: -0.5px;
+}
+
+.brand-name {
+  font-family: var(--mono); font-size: 18px; font-weight: 600;
+  color: var(--text); letter-spacing: 1px;
+}
+
+.brand-name span { color: var(--amber); }
+
+.tagline {
+  font-family: var(--serif); font-style: italic;
+  font-size: 15px; color: var(--muted2);
+  margin-bottom: 10px;
+}
+
+.header-meta {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+
+.chip {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); padding: 4px 10px;
+  border: 1px solid var(--border2); border-radius: 4px;
+}
+
+.chip.active { color: var(--cyan); border-color: rgba(56,201,232,0.3); background: var(--cyan-d); }
+
+.version-badge {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: 1px;
+}
+
+/* ── SETTINGS ROW ── */
+.settings-bar {
+  display: flex; gap: 12px; align-items: center;
+  margin-bottom: 32px; flex-wrap: wrap;
+}
+
+.settings-bar label {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted2); letter-spacing: 1px;
+  text-transform: uppercase; white-space: nowrap;
+}
+
+.api-key-wrap {
+  flex: 1; display: flex; gap: 8px; align-items: center;
+  min-width: 280px;
+}
+
+input[type="password"], input[type="text"], select, textarea {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--mono); font-size: 12px;
+  border-radius: var(--radius); outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="password"]:focus, input[type="text"]:focus,
+select:focus, textarea:focus {
+  border-color: var(--cyan);
+}
+
+#apiKey {
+  flex: 1; padding: 9px 14px;
+  letter-spacing: 0.5px;
+}
+
+#modelSelect {
+  padding: 9px 14px; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6080'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.save-key-btn {
+  padding: 9px 16px; font-family: var(--mono); font-size: 11px;
+  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--muted2); border-radius: var(--radius);
+  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+}
+.save-key-btn:hover { border-color: var(--muted2); color: var(--text); }
+.save-key-btn.saved { border-color: var(--green); color: var(--green); }
+
+/* ── INPUT PANELS ── */
+.panels {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 16px;
+}
+
+@media (max-width: 640px) { .panels { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); overflow: hidden;
+}
+
+.panel-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+
+.panel-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+
+.panel-dot.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.panel-dot.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+.panel-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--muted2);
+}
+
+.panel-num {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); margin-left: auto;
+  letter-spacing: 1px;
+}
+
+textarea {
+  width: 100%; border: none; border-radius: 0;
+  padding: 14px 16px; font-size: 13px;
+  line-height: 1.6; resize: none; height: 200px;
+  background: transparent;
+}
+
+.ref-panel {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 24px;
+  overflow: hidden; opacity: 0.7;
+}
+.ref-panel:focus-within { opacity: 1; border-color: var(--border2); }
+
+.ref-panel textarea { height: 80px; font-size: 12px; }
+
+/* ── RUN BUTTON ── */
+.run-row {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 40px;
+  gap: 16px; flex-wrap: wrap;
+}
+
+.run-note {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); flex: 1; min-width: 200px;
+}
+
+#runBtn {
+  padding: 14px 36px; font-family: var(--mono);
+  font-size: 13px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; cursor: pointer;
+  border-radius: var(--radius); border: none;
+  background: var(--amber); color: #0a0800;
+  position: relative; overflow: hidden;
+  transition: all 0.25s; white-space: nowrap;
+  min-width: 180px;
+}
+
+#runBtn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+}
+
+#runBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--amber-g); }
+#runBtn:active { transform: translateY(0); }
+#runBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+#runBtn.running {
+  background: var(--bg3); color: var(--cyan);
+  border: 1px solid var(--cyan); animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px;
+}
+
+.section-divider::before, .section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.section-label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+
+/* ── RESULTS ── */
+#results { display: none; }
+#results.visible { display: block; }
+
+/* SUMMARY ROW */
+.summary-row {
+  display: flex; gap: 16px; margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.score-orb {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 24px 28px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-width: 140px; flex-shrink: 0;
+}
+
+.orb-score {
+  font-family: var(--mono); font-size: 48px;
+  font-weight: 600; line-height: 1;
+  margin-bottom: 6px;
+}
+
+.orb-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted);
+}
+
+.verdict-card {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 20px 24px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.verdict-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+
+.verdict-text {
+  font-family: var(--serif); font-style: italic;
+  font-size: 15px; color: var(--text); line-height: 1.6;
+  flex: 1; margin-bottom: 12px;
+}
+
+.verdict-grade {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 1.5px; font-weight: 600;
+  padding: 6px 12px; border-radius: 6px;
+  display: inline-block;
+}
+
+/* DIMENSION CARDS */
+.dimensions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+
+.dim-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  transition: border-color 0.2s;
+}
+
+.dim-card:hover { border-color: var(--border2); }
+
+.dim-top {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+}
+
+.dim-icon {
+  font-size: 18px; width: 32px; text-align: center;
+}
+
+.dim-name {
+  font-family: var(--mono); font-size: 12px;
+  font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; flex: 1;
+}
+
+.dim-score-num {
+  font-family: var(--mono); font-size: 20px;
+  font-weight: 600;
+}
+
+.dim-denom {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--muted); align-self: flex-end; margin-bottom: 2px;
+}
+
+/* SCORE BAR */
+.score-bar-wrap {
+  height: 4px; background: var(--bg3);
+  border-radius: 2px; overflow: hidden; margin-bottom: 10px;
+}
+
+.score-bar-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+
+.dim-justification {
+  font-size: 13px; color: var(--muted2);
+  line-height: 1.6; font-family: var(--serif);
+  font-style: italic;
+}
+
+/* EXPORT ROW */
+.export-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+
+.export-btn {
+  padding: 10px 20px; font-family: var(--mono);
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; cursor: pointer;
+  border-radius: var(--radius); transition: all 0.2s;
+  background: transparent; color: var(--muted2);
+  border: 1px solid var(--border2);
+}
+.export-btn:hover { border-color: var(--muted2); color: var(--text); }
+.export-btn.copied { border-color: var(--green); color: var(--green); }
+
+/* ERROR */
+.error-box {
+  background: var(--red-d); border: 1px solid rgba(242,96,96,0.3);
+  border-radius: var(--radius); padding: 14px 18px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--red); margin-bottom: 24px; display: none;
+  line-height: 1.6;
+}
+.error-box.visible { display: block; }
+
+/* FOOTER */
+footer {
+  margin-top: 64px; padding: 24px 0 40px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+
+.footer-by {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.footer-by a {
+  color: var(--muted2); text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-by a:hover { color: var(--text); }
+
+.footer-dims {
+  display: flex; gap: 8px;
+}
+
+.dim-chip {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px;
+  border: 1px solid var(--border2); color: var(--muted);
+}
+
+/* LOADING DOTS */
+.loading-dots::after {
+  content: '';
+  animation: dots 1.4s infinite;
+}
+@keyframes dots {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+  100% { content: ''; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="brand">
+          <div class="brand-mark">EC</div>
+          <div class="brand-name">EVAL<span>CARD</span></div>
+        </div>
+        <div class="tagline">Score any LLM output across five dimensions, instantly.</div>
+        <div class="header-meta">
+          <div class="chip active">LLM-as-Judge</div>
+          <div class="chip">5-Dimension</div>
+          <div class="chip">Claude-Powered</div>
+          <div class="version-badge">v1.0</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SETTINGS BAR -->
+  <div class="settings-bar">
+    <label>API KEY</label>
+    <div class="api-key-wrap">
+      <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off">
+      <button class="save-key-btn" id="saveKeyBtn" onclick="saveKey()">Save</button>
+    </div>
+    <label>MODEL</label>
+    <select id="modelSelect">
+      <option value="claude-sonnet-4-20250514">claude-sonnet-4-6</option>
+      <option value="claude-opus-4-20250514">claude-opus-4-6</option>
+      <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+    </select>
+  </div>
+
+  <!-- INPUT PANELS -->
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot cyan"></div>
+        <span class="panel-label">Prompt / Question</span>
+        <span class="panel-num">01</span>
+      </div>
+      <textarea id="promptInput" placeholder="Paste the prompt or question that was sent to the LLM…" spellcheck="false"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot amber"></div>
+        <span class="panel-label">LLM Output to Evaluate</span>
+        <span class="panel-num">02</span>
+      </div>
+      <textarea id="outputInput" placeholder="Paste the LLM response you want scored…" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <!-- OPTIONAL REF -->
+  <div class="ref-panel">
+    <div class="panel-header">
+      <span class="panel-label" style="color:var(--muted);">Reference Answer (Optional)</span>
+      <span class="panel-num" style="color:var(--muted);">03 — helps score accuracy</span>
+    </div>
+    <textarea id="referenceInput" placeholder="Paste a reference answer or ground truth if you have one. Improves accuracy scoring." spellcheck="false"></textarea>
+  </div>
+
+  <!-- RUN ROW -->
+  <div class="run-row">
+    <div class="run-note">
+      Scored by Claude using LLM-as-judge. Your API key stays in your browser.
+    </div>
+    <button id="runBtn" onclick="runEval()">Run Eval →</button>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="section-divider">
+      <span class="section-label">Evaluation Results</span>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-row">
+      <div class="score-orb" id="scoreOrb">
+        <div class="orb-score" id="overallScore">—</div>
+        <div class="orb-label">Overall / 50</div>
+      </div>
+      <div class="verdict-card">
+        <div class="verdict-label">Judge Verdict</div>
+        <div class="verdict-text" id="verdictText">—</div>
+        <div class="verdict-grade" id="verdictGrade">—</div>
+      </div>
+    </div>
+
+    <!-- DIMENSIONS -->
+    <div class="section-divider">
+      <span class="section-label">Dimension Breakdown</span>
+    </div>
+
+    <div class="dimensions" id="dimensionsContainer"></div>
+
+    <!-- EXPORT -->
+    <div class="export-row">
+      <button class="export-btn" onclick="exportJSON()">Export JSON</button>
+      <button class="export-btn" onclick="exportMarkdown()">Copy Markdown</button>
+      <button class="export-btn" onclick="resetEval()">New Eval</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-by">
+      Built by <a href="https://linkedin.com/in/teja-padala/" target="_blank">Teja Padala</a>
+      · <a href="https://github.com/tejaswarpadala-a11y" target="_blank">github.com/tejaswarpadala-a11y</a>
+    </div>
+    <div class="footer-dims">
+      <span class="dim-chip">Accuracy</span>
+      <span class="dim-chip">Completeness</span>
+      <span class="dim-chip">Clarity</span>
+      <span class="dim-chip">Depth</span>
+      <span class="dim-chip">Relevance</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const DIMENSIONS = [
+  {
+    id: 'accuracy',
+    name: 'Factual Accuracy',
+    icon: '🎯',
+    description: 'Are the claims correct and verifiable? Penalizes hallucinations, misattributions, and factual errors.',
+    color: '#38c9e8',
+    colorD: 'rgba(56,201,232,0.1)'
+  },
+  {
+    id: 'completeness',
+    name: 'Completeness',
+    icon: '📋',
+    description: 'Does the response address all parts of the prompt? Penalizes missing sub-questions or scope gaps.',
+    color: '#9b7bff',
+    colorD: 'rgba(155,123,255,0.1)'
+  },
+  {
+    id: 'clarity',
+    name: 'Clarity',
+    icon: '💡',
+    description: 'Is the response well-structured and easy to follow? Considers organization, conciseness, and readability.',
+    color: '#f5a623',
+    colorD: 'rgba(245,166,35,0.1)'
+  },
+  {
+    id: 'depth',
+    name: 'Depth',
+    icon: '🔬',
+    description: 'Does it go beyond surface-level answers? Rewards insight, nuance, examples, and non-obvious analysis.',
+    color: '#3dd68c',
+    colorD: 'rgba(61,214,140,0.1)'
+  },
+  {
+    id: 'relevance',
+    name: 'Relevance',
+    icon: '🎯',
+    description: 'Does it stay focused on what was asked? Penalizes tangents, off-topic content, and scope creep.',
+    color: '#f26060',
+    colorD: 'rgba(242,96,96,0.1)'
+  }
+];
+
+let lastResult = null;
+
+// ── KEY PERSISTENCE ──────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('evalcard_api_key');
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+  }
+});
+
+function saveKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (key) {
+    localStorage.setItem('evalcard_api_key', key);
+    const btn = document.getElementById('saveKeyBtn');
+    btn.textContent = 'Saved ✓';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+  }
+}
+
+// ── EVAL RUNNER ──────────────────────────────────────────────────
+async function runEval() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const prompt = document.getElementById('promptInput').value.trim();
+  const output = document.getElementById('outputInput').value.trim();
+  const reference = document.getElementById('referenceInput').value.trim();
+  const model = document.getElementById('modelSelect').value;
+
+  hideError();
+
+  if (!apiKey) { showError('API key required. Enter your Anthropic API key above.'); return; }
+  if (!prompt) { showError('Prompt / question is required.'); return; }
+  if (!output) { showError('LLM output to evaluate is required.'); return; }
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.classList.add('running');
+  btn.innerHTML = '<span class="loading-dots">Scoring</span>';
+
+  document.getElementById('results').classList.remove('visible');
+
+  const judgePrompt = buildJudgePrompt(prompt, output, reference);
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: judgePrompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const raw = data.content.find(b => b.type === 'text')?.text || '';
+    const parsed = parseJudgeResponse(raw);
+
+    if (!parsed) {
+      throw new Error('Could not parse judge response. Try again or switch models.');
+    }
+
+    lastResult = { prompt, output, reference, model, scores: parsed, timestamp: new Date().toISOString() };
+    renderResults(parsed);
+
+  } catch (e) {
+    showError(`Error: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('running');
+    btn.textContent = 'Run Eval →';
+  }
+}
+
+// ── PROMPT BUILDER ────────────────────────────────────────────────
+function buildJudgePrompt(prompt, output, reference) {
+  const refSection = reference
+    ? `\n\nREFERENCE ANSWER (ground truth):\n${reference}`
+    : '\n\nNote: No reference answer provided. Score based on general quality and plausibility.';
+
+  return `You are an expert LLM output evaluator. Score the following LLM response across 5 dimensions, each from 1 to 10.
+
+PROMPT THAT WAS GIVEN TO THE LLM:
+${prompt}
+
+LLM OUTPUT TO EVALUATE:
+${output}
+${refSection}
+
+SCORING DIMENSIONS (each 1–10):
+1. accuracy — Factual correctness. Are claims verifiable and correct? Penalize hallucinations.
+2. completeness — Does it address all parts of the prompt? Penalize missing sub-questions.
+3. clarity — Is it well-organized and easy to follow? Consider structure and conciseness.
+4. depth — Does it go beyond surface-level? Reward insight, nuance, examples.
+5. relevance — Does it stay on-topic and directly address what was asked?
+
+VERDICT: A 1–2 sentence overall assessment of the response quality and its key strengths/weaknesses.
+GRADE: One of: Excellent | Strong | Adequate | Weak | Poor
+
+Respond with ONLY a JSON object, no preamble or markdown fences:
+{
+  "accuracy": { "score": 7, "justification": "..." },
+  "completeness": { "score": 8, "justification": "..." },
+  "clarity": { "score": 9, "justification": "..." },
+  "depth": { "score": 6, "justification": "..." },
+  "relevance": { "score": 8, "justification": "..." },
+  "verdict": "...",
+  "grade": "Strong"
+}`;
+}
+
+// ── PARSER ────────────────────────────────────────────────────────
+function parseJudgeResponse(raw) {
+  try {
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch {
+    // Attempt extraction if JSON is embedded
+    const match = raw.match(/\{[\s\S]+\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { return null; }
+    }
+    return null;
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderResults(data) {
+  const totalScore = DIMENSIONS.reduce((sum, d) => sum + (data[d.id]?.score || 0), 0);
+  const pct = (totalScore / 50) * 100;
+
+  // Overall score color
+  let scoreColor = '#f26060';
+  if (pct >= 80) scoreColor = '#3dd68c';
+  else if (pct >= 60) scoreColor = '#f5a623';
+  else if (pct >= 40) scoreColor = '#9b7bff';
+
+  document.getElementById('overallScore').textContent = totalScore;
+  document.getElementById('overallScore').style.color = scoreColor;
+
+  // Verdict
+  document.getElementById('verdictText').textContent = data.verdict || '—';
+
+  const gradeColors = {
+    'Excellent': ['#3dd68c', 'rgba(61,214,140,0.12)'],
+    'Strong':    ['#38c9e8', 'rgba(56,201,232,0.12)'],
+    'Adequate':  ['#f5a623', 'rgba(245,166,35,0.12)'],
+    'Weak':      ['#9b7bff', 'rgba(155,123,255,0.12)'],
+    'Poor':      ['#f26060', 'rgba(242,96,96,0.12)']
+  };
+  const grade = data.grade || 'Adequate';
+  const [gc, gBg] = gradeColors[grade] || ['#5a6080', '#1e2135'];
+  const gradeEl = document.getElementById('verdictGrade');
+  gradeEl.textContent = grade;
+  gradeEl.style.color = gc;
+  gradeEl.style.background = gBg;
+  gradeEl.style.border = `1px solid ${gc}44`;
+
+  // Dimensions
+  const container = document.getElementById('dimensionsContainer');
+  container.innerHTML = '';
+
+  DIMENSIONS.forEach(dim => {
+    const dimData = data[dim.id] || {};
+    const score = dimData.score || 0;
+    const pct = (score / 10) * 100;
+    const justification = dimData.justification || '—';
+
+    const card = document.createElement('div');
+    card.className = 'dim-card';
+    card.innerHTML = `
+      <div class="dim-top">
+        <span class="dim-icon">${dim.icon}</span>
+        <span class="dim-name" style="color:${dim.color}">${dim.name}</span>
+        <span class="dim-score-num" style="color:${dim.color}">${score}</span>
+        <span class="dim-denom">/10</span>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar-fill" style="width:0%;background:${dim.color}"></div>
+      </div>
+      <div class="dim-justification">${justification}</div>
+    `;
+    container.appendChild(card);
+
+    // Animate bar
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        card.querySelector('.score-bar-fill').style.width = pct + '%';
+      }, 100);
+    });
+  });
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────
+function exportJSON() {
+  if (!lastResult) return;
+  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `evalcard-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportMarkdown() {
+  if (!lastResult) return;
+  const { scores, timestamp } = lastResult;
+  const total = DIMENSIONS.reduce((s, d) => s + (scores[d.id]?.score || 0), 0);
+
+  let md = `# EVALCARD Report\n\n`;
+  md += `**Model:** ${lastResult.model}  \n`;
+  md += `**Timestamp:** ${timestamp}\n\n`;
+  md += `## Overall Score: ${total}/50 — ${scores.grade}\n\n`;
+  md += `> ${scores.verdict}\n\n`;
+  md += `## Dimension Scores\n\n`;
+  md += `| Dimension | Score |\n|---|---|\n`;
+  DIMENSIONS.forEach(d => {
+    md += `| ${d.name} | ${scores[d.id]?.score || 0}/10 |\n`;
+  });
+  md += `\n## Justifications\n\n`;
+  DIMENSIONS.forEach(d => {
+    md += `**${d.name}:** ${scores[d.id]?.justification || '—'}\n\n`;
+  });
+
+  navigator.clipboard.writeText(md).then(() => {
+    const btn = document.querySelector('.export-btn:nth-child(2)');
+    btn.textContent = 'Copied! ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Markdown'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function resetEval() {
+  document.getElementById('promptInput').value = '';
+  document.getElementById('outputInput').value = '';
+  document.getElementById('referenceInput').value = '';
+  document.getElementById('results').classList.remove('visible');
+  lastResult = null;
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── UTILS ────────────────────────────────────────────────────────
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('visible');
+}
+
+function hideError() {
+  document.getElementById('errorBox').classList.remove('visible');
+}
+</script>
+</body>
+</html>
