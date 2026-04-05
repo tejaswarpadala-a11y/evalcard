@@ -89,6 +89,7 @@ The judge prompt instructs Claude to score the output on five criteria and retur
 ## Limitations
 
 - Scores reflect Claude's judgment and inherit its biases — treat as directional, not ground truth
+- LLM judges tend to cluster scores in the 5–8 range; treat scores below 5 or above 9 as directionally significant rather than precise
 - Accuracy scoring without a reference answer is inherently limited
 - Not a replacement for human evaluation on high-stakes tasks
 - Rate limits apply based on your Anthropic API tier
