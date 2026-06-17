@@ -2,15 +2,23 @@
 
 **Score any LLM response across 5 dimensions in seconds, using LLM-as-judge.**
 
-A lightweight, single-file interactive tool that takes a prompt and an LLM output, sends both to Claude as a judge, and returns a structured 50-point scorecard with per-dimension justifications.
+A lightweight, single-file evaluation tool that takes a prompt and one LLM output, sends both to Claude as a judge, and returns a structured 50-point scorecard with per-dimension justifications.
 
-No backend. No build step. Open the HTML file, add your Anthropic API key, and run evals.
+No backend. No build step. Open the HTML file, add your Anthropic API key, and score one output at a time.
+
+---
+
+## Screenshot
+
+![EVALCARD scorecard — five dimensions, per-dimension justifications, and a 50-point total](./docs/evalcard-screenshot.png)
+
+*Illustrative scorecard rendered from `evalcard.html`. Scores and justifications above are a sample for demonstration.*
 
 ---
 
 ## Live Demo
 
-→ [Open `evalcard.html`](./evalcard.html) directly in your browser.
+→ [Open `evalcard.html`](./evalcard.html) directly in your browser. No server or build step.
 
 ---
 
@@ -58,11 +66,13 @@ The judge prompt instructs Claude to score the output on five criteria and retur
 
 ## Use Cases
 
-- **Model comparison** — run the same prompt through GPT-4o, Claude, and Gemini; score all three outputs
-- **Prompt iteration** — quantify how much a prompt rewrite improved output quality
-- **LLM audit** — document output quality before shipping a feature
-- **Vendor evaluation** — structured scoring for enterprise AI procurement decisions
-- **Research** — building a labeled eval dataset for fine-tuning or RLHF
+EVALCARD scores one output per run. Each of the workflows below is done by running multiple
+evals and saving the exported results yourself — there is no built-in comparison, diff, or history.
+
+- **Model comparison** — score outputs from different models on the same prompt one at a time, then compare the exported scorecards side by side
+- **Prompt iteration** — re-run the same eval after a prompt rewrite to see how the scores move
+- **Output review** — capture a structured quality read on an output before shipping
+- **Eval dataset building** — export per-output JSON to assemble a small labeled set by hand
 
 ---
 
@@ -105,4 +115,4 @@ Built by [Teja Padala](https://linkedin.com/in/teja-padala/) — Senior AI/ML Pr
 
 ## License
 
-MIT
+[MIT](./LICENSE) © 2026 Teja Padala
