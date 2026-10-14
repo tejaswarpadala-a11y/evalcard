@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EVALCARD — LLM Output Scorer</title>
+<title>EVALCARD — LLM &amp; Agent Eval Scorer</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap');
 
@@ -46,7 +46,6 @@ body {
   overflow-x: hidden;
 }
 
-/* BACKGROUND GRID */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -63,7 +62,7 @@ body::before {
 header {
   padding: 48px 0 40px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .header-inner {
@@ -71,9 +70,7 @@ header {
   justify-content: space-between; gap: 24px;
 }
 
-.brand {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
-}
+.brand { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 
 .brand-mark {
   width: 38px; height: 38px; border-radius: 8px;
@@ -96,9 +93,7 @@ header {
   margin-bottom: 10px;
 }
 
-.header-meta {
-  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-}
+.header-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
 .chip {
   font-family: var(--mono); font-size: 10px;
@@ -109,15 +104,42 @@ header {
 
 .chip.active { color: var(--cyan); border-color: rgba(56,201,232,0.3); background: var(--cyan-d); }
 
-.version-badge {
-  font-family: var(--mono); font-size: 10px;
-  color: var(--muted); letter-spacing: 1px;
+.version-badge { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+/* ── MODE TABS ── */
+.mode-tabs {
+  display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap;
 }
+
+.mode-tab {
+  flex: 1; min-width: 140px;
+  padding: 14px 18px; cursor: pointer;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); transition: all 0.2s;
+  text-align: left;
+}
+
+.mode-tab .mt-name {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted2); display: block; margin-bottom: 4px;
+}
+
+.mode-tab .mt-desc {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: 0.3px; line-height: 1.5;
+}
+
+.mode-tab:hover { border-color: var(--muted2); }
+
+.mode-tab.active { border-color: var(--amber); background: var(--amber-d); }
+.mode-tab.active .mt-name { color: var(--amber); }
+.mode-tab.active .mt-desc { color: var(--muted2); }
 
 /* ── SETTINGS ROW ── */
 .settings-bar {
   display: flex; gap: 12px; align-items: center;
-  margin-bottom: 32px; flex-wrap: wrap;
+  margin-bottom: 28px; flex-wrap: wrap;
 }
 
 .settings-bar label {
@@ -126,10 +148,7 @@ header {
   text-transform: uppercase; white-space: nowrap;
 }
 
-.api-key-wrap {
-  flex: 1; display: flex; gap: 8px; align-items: center;
-  min-width: 280px;
-}
+.api-key-wrap { flex: 1; display: flex; gap: 8px; align-items: center; min-width: 280px; }
 
 input[type="password"], input[type="text"], select, textarea {
   background: var(--bg2); border: 1px solid var(--border2);
@@ -139,22 +158,12 @@ input[type="password"], input[type="text"], select, textarea {
 }
 
 input[type="password"]:focus, input[type="text"]:focus,
-select:focus, textarea:focus {
-  border-color: var(--cyan);
-}
+select:focus, textarea:focus { border-color: var(--cyan); }
 
-#apiKey {
-  flex: 1; padding: 9px 14px;
-  letter-spacing: 0.5px;
-}
+#apiKey { flex: 1; padding: 9px 14px; letter-spacing: 0.5px; }
 
 #modelSelect {
-  padding: 9px 14px; cursor: pointer;
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6080'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
+  padding: 9px 14px; width: 220px; letter-spacing: 0.3px;
 }
 
 .save-key-btn {
@@ -167,11 +176,29 @@ select:focus, textarea:focus {
 .save-key-btn:hover { border-color: var(--muted2); color: var(--text); }
 .save-key-btn.saved { border-color: var(--green); color: var(--green); }
 
+/* ── CONSISTENCY TOGGLE ── */
+.options-row {
+  display: flex; gap: 16px; align-items: center;
+  margin-bottom: 28px; flex-wrap: wrap;
+}
+
+.opt-toggle {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; color: var(--muted2);
+  letter-spacing: 1px; text-transform: uppercase; user-select: none;
+}
+
+.opt-toggle input { accent-color: var(--amber); width: 14px; height: 14px; cursor: pointer; }
+
+.opt-hint { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.3px; }
+
 /* ── INPUT PANELS ── */
 .panels {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 16px; margin-bottom: 16px;
 }
+
+.panels.single-col { grid-template-columns: 1fr; }
 
 @media (max-width: 640px) { .panels { grid-template-columns: 1fr; } }
 
@@ -185,12 +212,11 @@ select:focus, textarea:focus {
   padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
 
-.panel-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-}
-
-.panel-dot.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.panel-dot { width: 7px; height: 7px; border-radius: 50%; }
+.panel-dot.cyan  { background: var(--cyan);  box-shadow: 0 0 8px var(--cyan); }
 .panel-dot.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.panel-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.panel-dot.purple{ background: var(--purple);box-shadow: 0 0 8px var(--purple); }
 
 .panel-label {
   font-family: var(--mono); font-size: 10px; font-weight: 600;
@@ -199,8 +225,7 @@ select:focus, textarea:focus {
 
 .panel-num {
   font-family: var(--mono); font-size: 10px;
-  color: var(--muted); margin-left: auto;
-  letter-spacing: 1px;
+  color: var(--muted); margin-left: auto; letter-spacing: 1px;
 }
 
 textarea {
@@ -210,13 +235,14 @@ textarea {
   background: transparent;
 }
 
+textarea.tall { height: 300px; }
+
 .ref-panel {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); margin-bottom: 24px;
   overflow: hidden; opacity: 0.7;
 }
 .ref-panel:focus-within { opacity: 1; border-color: var(--border2); }
-
 .ref-panel textarea { height: 80px; font-size: 12px; }
 
 /* ── RUN BUTTON ── */
@@ -226,10 +252,7 @@ textarea {
   gap: 16px; flex-wrap: wrap;
 }
 
-.run-note {
-  font-family: var(--mono); font-size: 11px;
-  color: var(--muted); flex: 1; min-width: 200px;
-}
+.run-note { font-family: var(--mono); font-size: 11px; color: var(--muted); flex: 1; min-width: 200px; }
 
 #runBtn {
   padding: 14px 36px; font-family: var(--mono);
@@ -257,21 +280,11 @@ textarea {
   border: 1px solid var(--cyan); animation: pulse 1.5s infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 /* ── DIVIDER ── */
-.section-divider {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 28px;
-}
-
-.section-divider::before, .section-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--border);
-}
-
+.section-divider { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .section-label {
   font-family: var(--mono); font-size: 10px;
   letter-spacing: 2.5px; text-transform: uppercase;
@@ -282,11 +295,7 @@ textarea {
 #results { display: none; }
 #results.visible { display: block; }
 
-/* SUMMARY ROW */
-.summary-row {
-  display: flex; gap: 16px; margin-bottom: 28px;
-  flex-wrap: wrap;
-}
+.summary-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 
 .score-orb {
   background: var(--bg2); border: 1px solid var(--border2);
@@ -296,17 +305,8 @@ textarea {
   min-width: 140px; flex-shrink: 0;
 }
 
-.orb-score {
-  font-family: var(--mono); font-size: 48px;
-  font-weight: 600; line-height: 1;
-  margin-bottom: 6px;
-}
-
-.orb-label {
-  font-family: var(--mono); font-size: 9px;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted);
-}
+.orb-score { font-family: var(--mono); font-size: 48px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+.orb-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
 
 .verdict-card {
   flex: 1; background: var(--bg2); border: 1px solid var(--border2);
@@ -314,24 +314,9 @@ textarea {
   display: flex; flex-direction: column; justify-content: space-between;
 }
 
-.verdict-label {
-  font-family: var(--mono); font-size: 9px;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 10px;
-}
-
-.verdict-text {
-  font-family: var(--serif); font-style: italic;
-  font-size: 15px; color: var(--text); line-height: 1.6;
-  flex: 1; margin-bottom: 12px;
-}
-
-.verdict-grade {
-  font-family: var(--mono); font-size: 11px;
-  letter-spacing: 1.5px; font-weight: 600;
-  padding: 6px 12px; border-radius: 6px;
-  display: inline-block;
-}
+.verdict-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.verdict-text { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--text); line-height: 1.6; flex: 1; margin-bottom: 12px; }
+.verdict-grade { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; font-weight: 600; padding: 6px 12px; border-radius: 6px; display: inline-block; }
 
 /* DIMENSION CARDS */
 .dimensions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
@@ -341,54 +326,91 @@ textarea {
   border-radius: var(--radius); padding: 18px 20px;
   transition: border-color 0.2s;
 }
-
 .dim-card:hover { border-color: var(--border2); }
 
-.dim-top {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+.dim-top { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.dim-icon { font-size: 18px; width: 32px; text-align: center; }
+.dim-name { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; flex: 1; }
+.dim-score-num { font-family: var(--mono); font-size: 20px; font-weight: 600; }
+.dim-denom { font-family: var(--mono); font-size: 12px; color: var(--muted); align-self: flex-end; margin-bottom: 2px; }
+
+.score-bar-wrap { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+.score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+
+.dim-justification { font-size: 13px; color: var(--muted2); line-height: 1.6; font-family: var(--serif); font-style: italic; }
+
+.dim-variance {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 2px 8px; border-radius: 4px; margin-left: 8px;
+}
+.dim-variance.stable   { color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.dim-variance.unstable { color: var(--red);   border: 1px solid rgba(242,96,96,0.3); }
+
+/* ── A/B COMPARE ── */
+.ab-verdict-banner {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 20px 24px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
 }
 
-.dim-icon {
-  font-size: 18px; width: 32px; text-align: center;
+.ab-winner-tag {
+  font-family: var(--mono); font-size: 14px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 10px 18px; border-radius: 8px; white-space: nowrap;
 }
 
-.dim-name {
-  font-family: var(--mono); font-size: 12px;
-  font-weight: 600; letter-spacing: 1px;
-  text-transform: uppercase; flex: 1;
+.ab-winner-note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted2); line-height: 1.6; flex: 1; min-width: 240px; }
+
+.bias-banner {
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 28px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.7; letter-spacing: 0.3px;
+}
+.bias-banner.clean { background: var(--green-d); border: 1px solid rgba(61,214,140,0.3); color: var(--green); }
+.bias-banner.flip  { background: var(--red-d);   border: 1px solid rgba(242,96,96,0.3);  color: var(--red); }
+
+.ab-row {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 10px;
 }
 
-.dim-score-num {
-  font-family: var(--mono); font-size: 20px;
-  font-weight: 600;
-}
+.ab-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ab-dim-name { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; flex: 1; }
 
-.dim-denom {
-  font-family: var(--mono); font-size: 12px;
-  color: var(--muted); align-self: flex-end; margin-bottom: 2px;
+.ab-delta {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; padding: 3px 10px; border-radius: 4px;
 }
+.ab-delta.a-wins { color: var(--cyan);  background: var(--cyan-d);  border: 1px solid rgba(56,201,232,0.3); }
+.ab-delta.b-wins { color: var(--purple);background: var(--purple-d);border: 1px solid rgba(155,123,255,0.3); }
+.ab-delta.tie    { color: var(--muted); border: 1px solid var(--border2); }
 
-/* SCORE BAR */
-.score-bar-wrap {
-  height: 4px; background: var(--bg3);
-  border-radius: 2px; overflow: hidden; margin-bottom: 10px;
-}
+.ab-bars { display: grid; grid-template-columns: 24px 1fr 40px; gap: 8px 12px; align-items: center; }
+.ab-bar-label { font-family: var(--mono); font-size: 10px; font-weight: 600; }
+.ab-bar-wrap { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.ab-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+.ab-bar-num { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: right; }
 
-.score-bar-fill {
-  height: 100%; border-radius: 2px;
-  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
-}
+.ab-note { font-size: 12px; color: var(--muted2); line-height: 1.6; font-family: var(--serif); font-style: italic; margin-top: 10px; }
 
-.dim-justification {
-  font-size: 13px; color: var(--muted2);
-  line-height: 1.6; font-family: var(--serif);
-  font-style: italic;
+/* ── STEP FLAGS ── */
+.step-flag {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 8px;
 }
+.step-flag-step { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+.step-flag-issue { font-size: 13px; color: var(--muted2); line-height: 1.6; font-family: var(--serif); font-style: italic; }
+
+/* ── CAVEATS ── */
+.caveat-card {
+  background: var(--amber-d); border: 1px solid var(--amber-g);
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 8px;
+}
+.caveat-label { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 6px; }
+.caveat-text { font-size: 13px; color: var(--text); line-height: 1.6; font-family: var(--serif); font-style: italic; }
 
 /* EXPORT ROW */
-.export-row {
-  display: flex; gap: 10px; flex-wrap: wrap;
-}
+.export-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
 .export-btn {
   padding: 10px 20px; font-family: var(--mono);
@@ -401,13 +423,14 @@ textarea {
 .export-btn:hover { border-color: var(--muted2); color: var(--text); }
 .export-btn.copied { border-color: var(--green); color: var(--green); }
 
+.session-count { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-left: auto; }
+
 /* ERROR */
 .error-box {
   background: var(--red-d); border: 1px solid rgba(242,96,96,0.3);
   border-radius: var(--radius); padding: 14px 18px;
   font-family: var(--mono); font-size: 12px;
-  color: var(--red); margin-bottom: 24px; display: none;
-  line-height: 1.6;
+  color: var(--red); margin-bottom: 24px; display: none; line-height: 1.6;
 }
 .error-box.visible { display: block; }
 
@@ -419,21 +442,10 @@ footer {
   flex-wrap: wrap; gap: 12px;
 }
 
-.footer-by {
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  letter-spacing: 0.5px;
-}
-
-.footer-by a {
-  color: var(--muted2); text-decoration: none;
-  transition: color 0.2s;
-}
+.footer-by { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.5px; }
+.footer-by a { color: var(--muted2); text-decoration: none; transition: color 0.2s; }
 .footer-by a:hover { color: var(--text); }
-
-.footer-dims {
-  display: flex; gap: 8px;
-}
-
+.footer-dims { display: flex; gap: 8px; flex-wrap: wrap; }
 .dim-chip {
   font-family: var(--mono); font-size: 9px;
   letter-spacing: 1px; text-transform: uppercase;
@@ -441,16 +453,16 @@ footer {
   border: 1px solid var(--border2); color: var(--muted);
 }
 
-/* LOADING DOTS */
-.loading-dots::after {
-  content: '';
-  animation: dots 1.4s infinite;
-}
+.loading-dots::after { content: ''; animation: dots 1.4s infinite; }
 @keyframes dots {
   0%   { content: '.'; }
   33%  { content: '..'; }
   66%  { content: '...'; }
   100% { content: ''; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
 </head>
@@ -466,16 +478,33 @@ footer {
           <div class="brand-mark">EC</div>
           <div class="brand-name">EVAL<span>CARD</span></div>
         </div>
-        <div class="tagline">Score any LLM output across five dimensions, instantly.</div>
+        <div class="tagline">Score any LLM output — or a full agent trace — instantly.</div>
         <div class="header-meta">
           <div class="chip active">LLM-as-Judge</div>
-          <div class="chip">5-Dimension</div>
+          <div class="chip">3 Modes</div>
+          <div class="chip">Bias-Checked</div>
           <div class="chip">Claude-Powered</div>
-          <div class="version-badge">v1.0</div>
+          <div class="version-badge">v2.0</div>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab-single" onclick="setMode('single')">
+      <span class="mt-name">Single Output</span>
+      <span class="mt-desc">One prompt, one response. The classic 5-dimension scorecard.</span>
+    </div>
+    <div class="mode-tab" id="tab-trace" onclick="setMode('trace')">
+      <span class="mt-name">Agent Trace</span>
+      <span class="mt-desc">Multi-step trace: reasoning, tool calls, results, final answer.</span>
+    </div>
+    <div class="mode-tab" id="tab-ab" onclick="setMode('ab')">
+      <span class="mt-name">A/B Compare</span>
+      <span class="mt-desc">Two responses, same prompt. Judged in both orders to expose position bias.</span>
+    </div>
+  </div>
 
   <!-- SETTINGS BAR -->
   <div class="settings-bar">
@@ -484,46 +513,133 @@ footer {
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off">
       <button class="save-key-btn" id="saveKeyBtn" onclick="saveKey()">Save</button>
     </div>
-    <label>MODEL</label>
-    <select id="modelSelect">
-      <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-      <option value="claude-opus-4-6">claude-opus-4-6</option>
-      <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
-    </select>
+    <label>JUDGE MODEL</label>
+    <input type="text" id="modelSelect" list="modelOptions" value="claude-sonnet-5-5" spellcheck="false" autocomplete="off" title="Any Anthropic model ID works here. Pick a suggestion or type your own, so the tool never goes stale when new models ship.">
+    <datalist id="modelOptions">
+      <option value="claude-sonnet-5-5"></option>
+      <option value="claude-opus-5-5"></option>
+      <option value="claude-haiku-5-5"></option>
+      <option value="claude-fable-5-1"></option>
+    </datalist>
   </div>
 
-  <!-- INPUT PANELS -->
-  <div class="panels">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-dot cyan"></div>
-        <span class="panel-label">Prompt / Question</span>
-        <span class="panel-num">01</span>
+  <!-- OPTIONS -->
+  <div class="options-row" id="consistencyRow">
+    <label class="opt-toggle">
+      <input type="checkbox" id="consistencyCheck">
+      2-Pass Consistency Check
+    </label>
+    <span class="opt-hint">Runs the judge twice on identical input and reports per-dimension variance. Doubles cost.</span>
+  </div>
+
+  <!-- ══ SINGLE MODE INPUTS ══ -->
+  <div id="inputs-single">
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot cyan"></div>
+          <span class="panel-label">Prompt / Question</span>
+          <span class="panel-num">01</span>
+        </div>
+        <textarea id="promptInput" placeholder="Paste the prompt or question that was sent to the LLM…" spellcheck="false"></textarea>
       </div>
-      <textarea id="promptInput" placeholder="Paste the prompt or question that was sent to the LLM…" spellcheck="false"></textarea>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot amber"></div>
+          <span class="panel-label">LLM Output to Evaluate</span>
+          <span class="panel-num">02</span>
+        </div>
+        <textarea id="outputInput" placeholder="Paste the LLM response you want scored…" spellcheck="false"></textarea>
+      </div>
     </div>
-    <div class="panel">
+    <div class="ref-panel">
       <div class="panel-header">
-        <div class="panel-dot amber"></div>
-        <span class="panel-label">LLM Output to Evaluate</span>
-        <span class="panel-num">02</span>
+        <span class="panel-label" style="color:var(--muted);">Reference Answer (Optional)</span>
+        <span class="panel-num" style="color:var(--muted);">03 — helps score accuracy</span>
       </div>
-      <textarea id="outputInput" placeholder="Paste the LLM response you want scored…" spellcheck="false"></textarea>
+      <textarea id="referenceInput" placeholder="Paste a reference answer or ground truth if you have one. Improves accuracy scoring." spellcheck="false"></textarea>
     </div>
   </div>
 
-  <!-- OPTIONAL REF -->
-  <div class="ref-panel">
-    <div class="panel-header">
-      <span class="panel-label" style="color:var(--muted);">Reference Answer (Optional)</span>
-      <span class="panel-num" style="color:var(--muted);">03 — helps score accuracy</span>
+  <!-- ══ TRACE MODE INPUTS ══ -->
+  <div id="inputs-trace" style="display:none;">
+    <div class="panels single-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot cyan"></div>
+          <span class="panel-label">Task / Goal Given to the Agent</span>
+          <span class="panel-num">01</span>
+        </div>
+        <textarea id="traceGoalInput" style="height:90px;" placeholder="What was the agent asked to accomplish? e.g. &quot;Analyze this utility bill and identify savings opportunities with confidence scores.&quot;" spellcheck="false"></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot amber"></div>
+          <span class="panel-label">Agent Trace</span>
+          <span class="panel-num">02 — steps, tool calls, results, final answer</span>
+        </div>
+        <textarea id="traceInput" class="tall" placeholder="Paste the full trace. Any readable format works — numbered steps, JSON, or logs. Include: reasoning steps, each tool call with its arguments, each tool result, and the final answer.
+
+Example:
+STEP 1 [reasoning]: Need to validate the upload is a utility bill first.
+STEP 2 [tool: validate_bill] args: {file: bill.pdf} → result: {is_bill: true, utility: &quot;Xcel&quot;}
+STEP 3 [tool: analyze_bill] args: {...} → result: {findings: [...], confidence_score: 85}
+STEP 4 [reasoning]: Two findings above threshold, generating call script.
+STEP 5 [tool: generate_script] → result: {...}
+FINAL ANSWER: Found 2 savings opportunities totaling $312/yr…" spellcheck="false"></textarea>
+      </div>
     </div>
-    <textarea id="referenceInput" placeholder="Paste a reference answer or ground truth if you have one. Improves accuracy scoring." spellcheck="false"></textarea>
+    <div class="ref-panel">
+      <div class="panel-header">
+        <span class="panel-label" style="color:var(--muted);">Ground Truth / Expected Outcome (Optional)</span>
+        <span class="panel-num" style="color:var(--muted);">03 — what a correct run should have found</span>
+      </div>
+      <textarea id="traceRefInput" placeholder="If you know what the agent should have found or done, paste it here. Sharpens goal-completion and faithfulness scoring." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <!-- ══ A/B MODE INPUTS ══ -->
+  <div id="inputs-ab" style="display:none;">
+    <div class="panels single-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot cyan"></div>
+          <span class="panel-label">Shared Prompt / Task</span>
+          <span class="panel-num">01</span>
+        </div>
+        <textarea id="abPromptInput" style="height:90px;" placeholder="The prompt or task both responses were given…" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot green"></div>
+          <span class="panel-label">Response A</span>
+          <span class="panel-num">02</span>
+        </div>
+        <textarea id="abOutputA" placeholder="First response (e.g. model v1, prompt v1, or agent config A)…" spellcheck="false"></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot purple"></div>
+          <span class="panel-label">Response B</span>
+          <span class="panel-num">03</span>
+        </div>
+        <textarea id="abOutputB" placeholder="Second response (e.g. model v2, prompt v2, or agent config B)…" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="ref-panel">
+      <div class="panel-header">
+        <span class="panel-label" style="color:var(--muted);">Reference Answer (Optional)</span>
+        <span class="panel-num" style="color:var(--muted);">04</span>
+      </div>
+      <textarea id="abRefInput" placeholder="Ground truth, if available." spellcheck="false"></textarea>
+    </div>
   </div>
 
   <!-- RUN ROW -->
   <div class="run-row">
-    <div class="run-note">
+    <div class="run-note" id="runNote">
       Scored by Claude using LLM-as-judge. Your API key stays in your browser.
     </div>
     <button id="runBtn" onclick="runEval()">Run Eval →</button>
@@ -535,14 +651,25 @@ footer {
   <!-- RESULTS -->
   <div id="results">
     <div class="section-divider">
-      <span class="section-label">Evaluation Results</span>
+      <span class="section-label" id="resultsLabel">Evaluation Results</span>
     </div>
 
-    <!-- SUMMARY -->
-    <div class="summary-row">
+    <!-- A/B verdict banner (A/B mode only) -->
+    <div id="abVerdictWrap" style="display:none;">
+      <div class="ab-verdict-banner">
+        <div class="ab-winner-tag" id="abWinnerTag">—</div>
+        <div class="ab-winner-note" id="abWinnerNote">—</div>
+      </div>
+      <div class="bias-banner" id="biasBanner"></div>
+      <div class="section-divider"><span class="section-label">Per-Dimension Comparison (avg of both orders)</span></div>
+      <div id="abRowsContainer" style="margin-bottom:28px;"></div>
+    </div>
+
+    <!-- SUMMARY (single + trace) -->
+    <div class="summary-row" id="summaryRow">
       <div class="score-orb" id="scoreOrb">
         <div class="orb-score" id="overallScore">—</div>
-        <div class="orb-label">Overall / 50</div>
+        <div class="orb-label" id="orbLabel">Overall / 50</div>
       </div>
       <div class="verdict-card">
         <div class="verdict-label">Judge Verdict</div>
@@ -551,18 +678,33 @@ footer {
       </div>
     </div>
 
-    <!-- DIMENSIONS -->
-    <div class="section-divider">
-      <span class="section-label">Dimension Breakdown</span>
+    <!-- DIMENSIONS (single + trace) -->
+    <div id="dimSectionWrap">
+      <div class="section-divider">
+        <span class="section-label">Dimension Breakdown</span>
+      </div>
+      <div class="dimensions" id="dimensionsContainer"></div>
     </div>
 
-    <div class="dimensions" id="dimensionsContainer"></div>
+    <!-- STEP FLAGS (trace only) -->
+    <div id="stepFlagsWrap" style="display:none;">
+      <div class="section-divider"><span class="section-label">Flagged Steps</span></div>
+      <div id="stepFlagsContainer" style="margin-bottom:28px;"></div>
+    </div>
+
+    <!-- CAVEATS (all modes) -->
+    <div id="caveatsWrap" style="display:none;">
+      <div class="section-divider"><span class="section-label">Judge Self-Caveats — where these scores could mislead</span></div>
+      <div id="caveatsContainer" style="margin-bottom:28px;"></div>
+    </div>
 
     <!-- EXPORT -->
     <div class="export-row">
       <button class="export-btn" onclick="exportJSON()">Export JSON</button>
-      <button class="export-btn" onclick="exportMarkdown()">Copy Markdown</button>
+      <button class="export-btn" id="mdBtn" onclick="exportMarkdown()">Copy Markdown</button>
+      <button class="export-btn" onclick="exportJSONL()">Export Session JSONL</button>
       <button class="export-btn" onclick="resetEval()">New Eval</button>
+      <span class="session-count" id="sessionCount"></span>
     </div>
   </div>
 
@@ -572,7 +714,7 @@ footer {
       Built by <a href="https://linkedin.com/in/teja-padala/" target="_blank">Teja Padala</a>
       · <a href="https://github.com/tejaswarpadala-a11y" target="_blank">github.com/tejaswarpadala-a11y</a>
     </div>
-    <div class="footer-dims">
+    <div class="footer-dims" id="footerDims">
       <span class="dim-chip">Accuracy</span>
       <span class="dim-chip">Completeness</span>
       <span class="dim-chip">Clarity</span>
@@ -586,138 +728,124 @@ footer {
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const DIMENSIONS = [
-  {
-    id: 'accuracy',
-    name: 'Factual Accuracy',
-    icon: '🎯',
-    description: 'Are the claims correct and verifiable? Penalizes hallucinations, misattributions, and factual errors.',
-    color: '#38c9e8',
-    colorD: 'rgba(56,201,232,0.1)'
-  },
-  {
-    id: 'completeness',
-    name: 'Completeness',
-    icon: '📋',
-    description: 'Does the response address all parts of the prompt? Penalizes missing sub-questions or scope gaps.',
-    color: '#9b7bff',
-    colorD: 'rgba(155,123,255,0.1)'
-  },
-  {
-    id: 'clarity',
-    name: 'Clarity',
-    icon: '💡',
-    description: 'Is the response well-structured and easy to follow? Considers organization, conciseness, and readability.',
-    color: '#f5a623',
-    colorD: 'rgba(245,166,35,0.1)'
-  },
-  {
-    id: 'depth',
-    name: 'Depth',
-    icon: '🔬',
-    description: 'Does it go beyond surface-level answers? Rewards insight, nuance, examples, and non-obvious analysis.',
-    color: '#3dd68c',
-    colorD: 'rgba(61,214,140,0.1)'
-  },
-  {
-    id: 'relevance',
-    name: 'Relevance',
-    icon: '🎯',
-    description: 'Does it stay focused on what was asked? Penalizes tangents, off-topic content, and scope creep.',
-    color: '#f26060',
-    colorD: 'rgba(242,96,96,0.1)'
-  }
+  { id: 'accuracy',     name: 'Factual Accuracy', icon: '🎯', color: '#38c9e8' },
+  { id: 'completeness', name: 'Completeness',     icon: '📋', color: '#9b7bff' },
+  { id: 'clarity',      name: 'Clarity',          icon: '💡', color: '#f5a623' },
+  { id: 'depth',        name: 'Depth',            icon: '🔬', color: '#3dd68c' },
+  { id: 'relevance',    name: 'Relevance',        icon: '🧭', color: '#f26060' }
 ];
 
+const TRACE_DIMENSIONS = [
+  { id: 'goal_completion', name: 'Goal Completion',  icon: '🏁', color: '#38c9e8' },
+  { id: 'tool_selection',  name: 'Tool Selection',   icon: '🔧', color: '#9b7bff' },
+  { id: 'step_efficiency', name: 'Step Efficiency',  icon: '⚡', color: '#f5a623' },
+  { id: 'error_recovery',  name: 'Error Recovery',   icon: '🛟', color: '#3dd68c' },
+  { id: 'faithfulness',    name: 'Evidence Faithfulness', icon: '🔗', color: '#f26060' }
+];
+
+let currentMode = 'single';
 let lastResult = null;
+let sessionLog = [];   // in-memory eval-dataset rows; exported as JSONL
+
+// ── MODE SWITCHING ───────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  ['single', 'trace', 'ab'].forEach(m => {
+    document.getElementById('tab-' + m).classList.toggle('active', m === mode);
+    document.getElementById('inputs-' + m).style.display = m === mode ? 'block' : 'none';
+  });
+  // Consistency check applies to single + trace only (A/B already runs 2 calls)
+  document.getElementById('consistencyRow').style.display = mode === 'ab' ? 'none' : 'flex';
+  const notes = {
+    single: 'Scored by Claude using LLM-as-judge. Your API key stays in your browser.',
+    trace:  'Agent-native rubric: goal, tools, efficiency, recovery, faithfulness. Key stays in your browser.',
+    ab:     'Judged twice — A-first and B-first — with identities masked, to expose position bias. 2 API calls.'
+  };
+  document.getElementById('runNote').textContent = notes[mode];
+  const dims = mode === 'trace' ? TRACE_DIMENSIONS : DIMENSIONS;
+  document.getElementById('footerDims').innerHTML =
+    dims.map(d => `<span class="dim-chip">${d.name}</span>`).join('');
+  document.getElementById('results').classList.remove('visible');
+  hideError();
+}
 
 // ── KEY PERSISTENCE ──────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('evalcard_api_key');
-  if (saved) {
-    document.getElementById('apiKey').value = saved;
-  }
+  try {
+    const saved = localStorage.getItem('evalcard_api_key');
+    if (saved) document.getElementById('apiKey').value = saved;
+    const savedModel = localStorage.getItem('evalcard_model');
+    if (savedModel) document.getElementById('modelSelect').value = savedModel;
+  } catch (e) { /* storage unavailable (private mode) — settings just won't persist */ }
+  document.getElementById('modelSelect').addEventListener('change', () => {
+    try { localStorage.setItem('evalcard_model', document.getElementById('modelSelect').value.trim()); } catch (e) {}
+  });
 });
 
 function saveKey() {
   const key = document.getElementById('apiKey').value.trim();
-  if (key) {
+  if (!key) return;
+  try {
     localStorage.setItem('evalcard_api_key', key);
     const btn = document.getElementById('saveKeyBtn');
     btn.textContent = 'Saved ✓';
     btn.classList.add('saved');
     setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
-  }
-}
-
-// ── EVAL RUNNER ──────────────────────────────────────────────────
-async function runEval() {
-  const apiKey = document.getElementById('apiKey').value.trim();
-  const prompt = document.getElementById('promptInput').value.trim();
-  const output = document.getElementById('outputInput').value.trim();
-  const reference = document.getElementById('referenceInput').value.trim();
-  const model = document.getElementById('modelSelect').value;
-
-  hideError();
-
-  if (!apiKey) { showError('API key required. Enter your Anthropic API key above.'); return; }
-  if (!prompt) { showError('Prompt / question is required.'); return; }
-  if (!output) { showError('LLM output to evaluate is required.'); return; }
-
-  const btn = document.getElementById('runBtn');
-  btn.disabled = true;
-  btn.classList.add('running');
-  btn.innerHTML = '<span class="loading-dots">Scoring</span>';
-
-  document.getElementById('results').classList.remove('visible');
-
-  const judgePrompt = buildJudgePrompt(prompt, output, reference);
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: judgePrompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || `API error ${response.status}`);
-    }
-
-    const data = await response.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '';
-    const parsed = parseJudgeResponse(raw);
-
-    if (!parsed) {
-      throw new Error('Could not parse judge response. Try again or switch models.');
-    }
-
-    lastResult = { prompt, output, reference, model, scores: parsed, timestamp: new Date().toISOString() };
-    renderResults(parsed);
-
   } catch (e) {
-    showError(`Error: ${e.message}`);
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove('running');
-    btn.textContent = 'Run Eval →';
+    showError('Could not persist key (storage unavailable). It will work for this session only.');
   }
 }
 
-// ── PROMPT BUILDER ────────────────────────────────────────────────
-function buildJudgePrompt(prompt, output, reference) {
+// ── API CALL ─────────────────────────────────────────────────────
+async function callJudge(apiKey, model, judgePrompt, maxTokens) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens || 1500,
+      messages: [{ role: 'user', content: judgePrompt }]
+    })
+  });
+  if (!response.ok) {
+    let msg = `API error ${response.status}`;
+    try { const err = await response.json(); msg = err.error?.message || msg; } catch (e) {}
+    throw new Error(msg);
+  }
+  const data = await response.json();
+  const raw = (data.content || []).find(b => b.type === 'text')?.text || '';
+  const parsed = parseJudgeResponse(raw);
+  if (!parsed) throw new Error('Could not parse judge response. Try again or switch models.');
+  return parsed;
+}
+
+function parseJudgeResponse(raw) {
+  try {
+    return JSON.parse(raw.replace(/```json|```/g, '').trim());
+  } catch (e) {
+    const match = raw.match(/\{[\s\S]+\}/);
+    if (match) { try { return JSON.parse(match[0]); } catch (e2) { return null; } }
+    return null;
+  }
+}
+
+// ── PROMPT BUILDERS ──────────────────────────────────────────────
+const CAVEAT_INSTRUCTION = `
+CAVEATS: After scoring, list 0-3 caveats — specific ways these scores could MISLEAD a reader.
+A caveat names a case where a score looks fine but hides a problem (e.g. "clarity is high but the
+answer is confidently wrong — a reader skimming scores would miss that"), or where you as a judge
+are unreliable for this input (e.g. "no reference provided, so accuracy is plausibility, not verification").
+Only include genuine caveats. An empty list is a valid answer.`;
+
+function buildSinglePrompt(prompt, output, reference) {
   const refSection = reference
     ? `\n\nREFERENCE ANSWER (ground truth):\n${reference}`
-    : '\n\nNote: No reference answer provided. Score based on general quality and plausibility.';
+    : '\n\nNote: No reference answer provided. Score accuracy on plausibility and internal consistency, and say so in your caveats.';
 
   return `You are an expert LLM output evaluator. Score the following LLM response across 5 dimensions, each from 1 to 10.
 
@@ -735,8 +863,9 @@ SCORING DIMENSIONS (each 1–10):
 4. depth — Does it go beyond surface-level? Reward insight, nuance, examples.
 5. relevance — Does it stay on-topic and directly address what was asked?
 
-VERDICT: A 1–2 sentence overall assessment of the response quality and its key strengths/weaknesses.
+VERDICT: A 1–2 sentence overall assessment.
 GRADE: One of: Excellent | Strong | Adequate | Weak | Poor
+${CAVEAT_INSTRUCTION}
 
 Respond with ONLY a JSON object, no preamble or markdown fences:
 {
@@ -746,31 +875,240 @@ Respond with ONLY a JSON object, no preamble or markdown fences:
   "depth": { "score": 6, "justification": "..." },
   "relevance": { "score": 8, "justification": "..." },
   "verdict": "...",
-  "grade": "Strong"
+  "grade": "Strong",
+  "caveats": ["...", "..."]
 }`;
 }
 
-// ── PARSER ────────────────────────────────────────────────────────
-function parseJudgeResponse(raw) {
+function buildTracePrompt(goal, trace, reference) {
+  const refSection = reference
+    ? `\n\nGROUND TRUTH / EXPECTED OUTCOME:\n${reference}`
+    : '\n\nNote: No ground truth provided. Judge goal completion from the trace\'s own evidence, and flag this limitation in your caveats.';
+
+  return `You are an expert evaluator of AI agent trajectories. You will judge a multi-step agent trace — not just its final answer. Score across 5 agent-native dimensions, each from 1 to 10.
+
+TASK / GOAL GIVEN TO THE AGENT:
+${goal}
+
+AGENT TRACE (reasoning steps, tool calls, tool results, final answer):
+${trace}
+${refSection}
+
+SCORING DIMENSIONS (each 1–10):
+1. goal_completion — Did the agent actually accomplish the stated task? Partial credit for partial completion; penalize declared success unsupported by the trace.
+2. tool_selection — Were the right tools chosen with sensible arguments? Penalize wrong-tool calls, missing calls that were clearly needed, and calls made with malformed or guessed arguments.
+3. step_efficiency — Was the path direct? Penalize redundant calls, loops, and steps that gathered information never used. Reward economy.
+4. error_recovery — When a step failed or returned something unexpected, did the agent notice and adapt? If no errors occurred, score on whether the trace shows any verification behavior at all, and note that in the justification.
+5. faithfulness — Is the final answer supported by the evidence actually gathered in the trace? Penalize claims in the final answer that no step supports, and confidence statements the trace does not earn.
+
+STEP FLAGS: List specific problematic steps by their number/position with a one-line issue each. Empty list if the trace is clean.
+
+VERDICT: A 1–2 sentence overall assessment of the trajectory.
+GRADE: One of: Excellent | Strong | Adequate | Weak | Poor
+${CAVEAT_INSTRUCTION}
+
+Respond with ONLY a JSON object, no preamble or markdown fences:
+{
+  "goal_completion": { "score": 7, "justification": "..." },
+  "tool_selection": { "score": 8, "justification": "..." },
+  "step_efficiency": { "score": 6, "justification": "..." },
+  "error_recovery": { "score": 5, "justification": "..." },
+  "faithfulness": { "score": 8, "justification": "..." },
+  "step_flags": [ { "step": "STEP 3", "issue": "..." } ],
+  "verdict": "...",
+  "grade": "Strong",
+  "caveats": ["..."]
+}`;
+}
+
+function buildABPrompt(prompt, first, second, reference) {
+  const refSection = reference
+    ? `\n\nREFERENCE ANSWER (ground truth):\n${reference}`
+    : '';
+
+  return `You are an expert LLM output evaluator comparing two responses to the same prompt. The responses are labeled RESPONSE 1 and RESPONSE 2. You do not know which system produced which — judge purely on content.
+
+PROMPT GIVEN TO BOTH:
+${prompt}
+
+RESPONSE 1:
+${first}
+
+RESPONSE 2:
+${second}
+${refSection}
+
+Score EACH response on 5 dimensions (each 1–10): accuracy, completeness, clarity, depth, relevance (same definitions as standard LLM evaluation).
+
+Then declare a winner: "1", "2", or "tie", with a one-sentence reason grounded in the dimension differences.
+
+Respond with ONLY a JSON object, no preamble or markdown fences:
+{
+  "response1": {
+    "accuracy": { "score": 7, "justification": "..." },
+    "completeness": { "score": 8, "justification": "..." },
+    "clarity": { "score": 9, "justification": "..." },
+    "depth": { "score": 6, "justification": "..." },
+    "relevance": { "score": 8, "justification": "..." }
+  },
+  "response2": { same structure },
+  "winner": "1",
+  "reason": "..."
+}`;
+}
+
+// ── EVAL RUNNER ──────────────────────────────────────────────────
+async function runEval() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const model = document.getElementById('modelSelect').value.trim() || 'claude-sonnet-5-5';
+  hideError();
+
+  if (!apiKey) { showError('API key required. Enter your Anthropic API key above.'); return; }
+
+  const btn = document.getElementById('runBtn');
+  const setRunning = (label) => {
+    btn.disabled = true; btn.classList.add('running');
+    btn.innerHTML = `<span class="loading-dots">${label}</span>`;
+  };
+  const setIdle = () => {
+    btn.disabled = false; btn.classList.remove('running');
+    btn.textContent = 'Run Eval →';
+  };
+  document.getElementById('results').classList.remove('visible');
+
   try {
-    const cleaned = raw.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleaned);
-  } catch {
-    // Attempt extraction if JSON is embedded
-    const match = raw.match(/\{[\s\S]+\}/);
-    if (match) {
-      try { return JSON.parse(match[0]); } catch { return null; }
-    }
-    return null;
+    if (currentMode === 'single')      await runSingle(apiKey, model, setRunning);
+    else if (currentMode === 'trace')  await runTrace(apiKey, model, setRunning);
+    else                               await runAB(apiKey, model, setRunning);
+  } catch (e) {
+    showError(`Error: ${e.message}`);
+  } finally {
+    setIdle();
   }
 }
 
-// ── RENDER ────────────────────────────────────────────────────────
-function renderResults(data) {
-  const totalScore = DIMENSIONS.reduce((sum, d) => sum + (data[d.id]?.score || 0), 0);
-  const pct = (totalScore / 50) * 100;
+async function runSingle(apiKey, model, setRunning) {
+  const prompt = document.getElementById('promptInput').value.trim();
+  const output = document.getElementById('outputInput').value.trim();
+  const reference = document.getElementById('referenceInput').value.trim();
+  if (!prompt) throw new Error('Prompt / question is required.');
+  if (!output) throw new Error('LLM output to evaluate is required.');
 
-  // Overall score color
+  const consistency = document.getElementById('consistencyCheck').checked;
+  setRunning(consistency ? 'Scoring pass 1 of 2' : 'Scoring');
+
+  const judgePrompt = buildSinglePrompt(prompt, output, reference);
+  const pass1 = await callJudge(apiKey, model, judgePrompt, 1500);
+
+  let pass2 = null;
+  if (consistency) {
+    setRunning('Scoring pass 2 of 2');
+    pass2 = await callJudge(apiKey, model, judgePrompt, 1500);
+  }
+
+  lastResult = {
+    mode: 'single', prompt, output, reference, model,
+    scores: pass1, consistency_pass: pass2,
+    timestamp: new Date().toISOString()
+  };
+  sessionLog.push(makeSessionRow(lastResult));
+  renderScorecard(pass1, DIMENSIONS, 'Evaluation Results', pass2);
+}
+
+async function runTrace(apiKey, model, setRunning) {
+  const goal = document.getElementById('traceGoalInput').value.trim();
+  const trace = document.getElementById('traceInput').value.trim();
+  const reference = document.getElementById('traceRefInput').value.trim();
+  if (!goal) throw new Error('Task / goal is required — the judge needs to know what the agent was trying to do.');
+  if (!trace) throw new Error('Agent trace is required.');
+
+  const consistency = document.getElementById('consistencyCheck').checked;
+  setRunning(consistency ? 'Judging trace 1 of 2' : 'Judging trace');
+
+  const judgePrompt = buildTracePrompt(goal, trace, reference);
+  const pass1 = await callJudge(apiKey, model, judgePrompt, 2000);
+
+  let pass2 = null;
+  if (consistency) {
+    setRunning('Judging trace 2 of 2');
+    pass2 = await callJudge(apiKey, model, judgePrompt, 2000);
+  }
+
+  lastResult = {
+    mode: 'trace', goal, trace, reference, model,
+    scores: pass1, consistency_pass: pass2,
+    timestamp: new Date().toISOString()
+  };
+  sessionLog.push(makeSessionRow(lastResult));
+  renderScorecard(pass1, TRACE_DIMENSIONS, 'Trace Evaluation Results', pass2);
+  renderStepFlags(pass1.step_flags || []);
+}
+
+async function runAB(apiKey, model, setRunning) {
+  const prompt = document.getElementById('abPromptInput').value.trim();
+  const outA = document.getElementById('abOutputA').value.trim();
+  const outB = document.getElementById('abOutputB').value.trim();
+  const reference = document.getElementById('abRefInput').value.trim();
+  if (!prompt) throw new Error('Shared prompt is required.');
+  if (!outA || !outB) throw new Error('Both Response A and Response B are required.');
+
+  // Order 1: A shown as Response 1. Order 2: B shown as Response 1.
+  setRunning('Judging order 1 of 2 (A first)');
+  const order1 = await callJudge(apiKey, model, buildABPrompt(prompt, outA, outB, reference), 2500);
+  setRunning('Judging order 2 of 2 (B first)');
+  const order2 = await callJudge(apiKey, model, buildABPrompt(prompt, outB, outA, reference), 2500);
+
+  // Map masked labels back: order1 → A=response1, B=response2; order2 → A=response2, B=response1
+  const aScores = { o1: order1.response1, o2: order2.response2 };
+  const bScores = { o1: order1.response2, o2: order2.response1 };
+  const w1 = order1.winner === '1' ? 'A' : order1.winner === '2' ? 'B' : 'tie';
+  const w2 = order2.winner === '1' ? 'B' : order2.winner === '2' ? 'A' : 'tie';
+
+  const perDim = DIMENSIONS.map(d => {
+    const a = ((aScores.o1?.[d.id]?.score || 0) + (aScores.o2?.[d.id]?.score || 0)) / 2;
+    const b = ((bScores.o1?.[d.id]?.score || 0) + (bScores.o2?.[d.id]?.score || 0)) / 2;
+    return { id: d.id, name: d.name, color: d.color, a, b, delta: +(a - b).toFixed(1),
+             justA: aScores.o1?.[d.id]?.justification || '', justB: bScores.o1?.[d.id]?.justification || '' };
+  });
+
+  const totalA = +perDim.reduce((s, d) => s + d.a, 0).toFixed(1);
+  const totalB = +perDim.reduce((s, d) => s + d.b, 0).toFixed(1);
+  const positionFlip = (w1 !== w2);
+  let finalWinner = 'tie';
+  if (!positionFlip && w1 !== 'tie') finalWinner = w1;
+  else if (positionFlip) finalWinner = totalA > totalB ? 'A' : totalB > totalA ? 'B' : 'tie';
+  else finalWinner = totalA > totalB ? 'A' : totalB > totalA ? 'B' : 'tie';
+
+  lastResult = {
+    mode: 'ab', prompt, output_a: outA, output_b: outB, reference, model,
+    order1_winner: w1, order2_winner: w2, position_flip: positionFlip,
+    per_dimension: perDim, total_a: totalA, total_b: totalB, winner: finalWinner,
+    reason_order1: order1.reason || '', reason_order2: order2.reason || '',
+    timestamp: new Date().toISOString()
+  };
+  sessionLog.push(makeSessionRow(lastResult));
+  renderAB(lastResult);
+}
+
+// ── RENDERERS ────────────────────────────────────────────────────
+const GRADE_COLORS = {
+  'Excellent': ['#3dd68c', 'rgba(61,214,140,0.12)'],
+  'Strong':    ['#38c9e8', 'rgba(56,201,232,0.12)'],
+  'Adequate':  ['#f5a623', 'rgba(245,166,35,0.12)'],
+  'Weak':      ['#9b7bff', 'rgba(155,123,255,0.12)'],
+  'Poor':      ['#f26060', 'rgba(242,96,96,0.12)']
+};
+
+function renderScorecard(data, dims, label, pass2) {
+  // layout toggles
+  document.getElementById('abVerdictWrap').style.display = 'none';
+  document.getElementById('summaryRow').style.display = 'flex';
+  document.getElementById('dimSectionWrap').style.display = 'block';
+  document.getElementById('stepFlagsWrap').style.display = 'none';
+  document.getElementById('resultsLabel').textContent = label;
+
+  const totalScore = dims.reduce((sum, d) => sum + (data[d.id]?.score || 0), 0);
+  const pct = (totalScore / 50) * 100;
   let scoreColor = '#f26060';
   if (pct >= 80) scoreColor = '#3dd68c';
   else if (pct >= 60) scoreColor = '#f5a623';
@@ -778,34 +1116,36 @@ function renderResults(data) {
 
   document.getElementById('overallScore').textContent = totalScore;
   document.getElementById('overallScore').style.color = scoreColor;
-
-  // Verdict
+  document.getElementById('orbLabel').textContent = 'Overall / 50';
   document.getElementById('verdictText').textContent = data.verdict || '—';
 
-  const gradeColors = {
-    'Excellent': ['#3dd68c', 'rgba(61,214,140,0.12)'],
-    'Strong':    ['#38c9e8', 'rgba(56,201,232,0.12)'],
-    'Adequate':  ['#f5a623', 'rgba(245,166,35,0.12)'],
-    'Weak':      ['#9b7bff', 'rgba(155,123,255,0.12)'],
-    'Poor':      ['#f26060', 'rgba(242,96,96,0.12)']
-  };
   const grade = data.grade || 'Adequate';
-  const [gc, gBg] = gradeColors[grade] || ['#5a6080', '#1e2135'];
+  const [gc, gBg] = GRADE_COLORS[grade] || ['#5a6080', '#1e2135'];
   const gradeEl = document.getElementById('verdictGrade');
   gradeEl.textContent = grade;
   gradeEl.style.color = gc;
   gradeEl.style.background = gBg;
   gradeEl.style.border = `1px solid ${gc}44`;
 
-  // Dimensions
   const container = document.getElementById('dimensionsContainer');
   container.innerHTML = '';
 
-  DIMENSIONS.forEach(dim => {
+  dims.forEach(dim => {
     const dimData = data[dim.id] || {};
     const score = dimData.score || 0;
-    const pct = (score / 10) * 100;
+    const barPct = (score / 10) * 100;
     const justification = dimData.justification || '—';
+
+    // consistency variance
+    let varianceHtml = '';
+    if (pass2) {
+      const s2 = pass2[dim.id]?.score;
+      if (typeof s2 === 'number') {
+        const diff = Math.abs(score - s2);
+        const cls = diff >= 2 ? 'unstable' : 'stable';
+        varianceHtml = `<span class="dim-variance ${cls}" title="Second identical pass scored ${s2}/10">2ND PASS: ${s2} · Δ${diff}</span>`;
+      }
+    }
 
     const card = document.createElement('div');
     card.className = 'dim-card';
@@ -813,62 +1153,238 @@ function renderResults(data) {
       <div class="dim-top">
         <span class="dim-icon">${dim.icon}</span>
         <span class="dim-name" style="color:${dim.color}">${dim.name}</span>
+        ${varianceHtml}
         <span class="dim-score-num" style="color:${dim.color}">${score}</span>
         <span class="dim-denom">/10</span>
       </div>
       <div class="score-bar-wrap">
         <div class="score-bar-fill" style="width:0%;background:${dim.color}"></div>
       </div>
-      <div class="dim-justification">${justification}</div>
+      <div class="dim-justification"></div>
     `;
+    card.querySelector('.dim-justification').textContent = justification;
     container.appendChild(card);
 
-    // Animate bar
+    requestAnimationFrame(() => {
+      setTimeout(() => { card.querySelector('.score-bar-fill').style.width = barPct + '%'; }, 100);
+    });
+  });
+
+  renderCaveats(collectCaveats(data, pass2));
+  showResults();
+}
+
+function renderStepFlags(flags) {
+  const wrap = document.getElementById('stepFlagsWrap');
+  const container = document.getElementById('stepFlagsContainer');
+  container.innerHTML = '';
+  if (!flags || !flags.length) { wrap.style.display = 'none'; return; }
+  flags.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'step-flag';
+    el.innerHTML = `<div class="step-flag-step"></div><div class="step-flag-issue"></div>`;
+    el.querySelector('.step-flag-step').textContent = f.step || 'STEP ?';
+    el.querySelector('.step-flag-issue').textContent = f.issue || '—';
+    container.appendChild(el);
+  });
+  wrap.style.display = 'block';
+}
+
+function collectCaveats(pass1, pass2) {
+  const set = [];
+  (pass1.caveats || []).forEach(c => { if (c && !set.includes(c)) set.push(c); });
+  if (pass2) (pass2.caveats || []).forEach(c => { if (c && !set.includes(c)) set.push(c); });
+  if (pass2) {
+    const dims = currentMode === 'trace' ? TRACE_DIMENSIONS : DIMENSIONS;
+    const unstable = dims.filter(d => {
+      const s1 = pass1[d.id]?.score, s2 = pass2[d.id]?.score;
+      return typeof s1 === 'number' && typeof s2 === 'number' && Math.abs(s1 - s2) >= 2;
+    });
+    if (unstable.length) {
+      set.push(`Judge self-disagreement: ${unstable.map(d => d.name).join(', ')} shifted by 2+ points between identical passes. Treat those dimensions as low-confidence.`);
+    }
+  }
+  return set;
+}
+
+function renderCaveats(caveats) {
+  const wrap = document.getElementById('caveatsWrap');
+  const container = document.getElementById('caveatsContainer');
+  container.innerHTML = '';
+  if (!caveats.length) { wrap.style.display = 'none'; return; }
+  caveats.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'caveat-card';
+    el.innerHTML = `<div class="caveat-label">Caveat ${i + 1}</div><div class="caveat-text"></div>`;
+    el.querySelector('.caveat-text').textContent = c;
+    container.appendChild(el);
+  });
+  wrap.style.display = 'block';
+}
+
+function renderAB(r) {
+  document.getElementById('summaryRow').style.display = 'none';
+  document.getElementById('dimSectionWrap').style.display = 'none';
+  document.getElementById('stepFlagsWrap').style.display = 'none';
+  document.getElementById('resultsLabel').textContent = 'A/B Comparison Results';
+  document.getElementById('abVerdictWrap').style.display = 'block';
+
+  const tag = document.getElementById('abWinnerTag');
+  const note = document.getElementById('abWinnerNote');
+  if (r.winner === 'A') {
+    tag.textContent = `A Wins · ${r.total_a} vs ${r.total_b}`;
+    tag.style.color = '#38c9e8'; tag.style.background = 'rgba(56,201,232,0.12)';
+    tag.style.border = '1px solid rgba(56,201,232,0.35)';
+  } else if (r.winner === 'B') {
+    tag.textContent = `B Wins · ${r.total_b} vs ${r.total_a}`;
+    tag.style.color = '#9b7bff'; tag.style.background = 'rgba(155,123,255,0.12)';
+    tag.style.border = '1px solid rgba(155,123,255,0.35)';
+  } else {
+    tag.textContent = `Tie · ${r.total_a} vs ${r.total_b}`;
+    tag.style.color = '#8890b0'; tag.style.background = 'transparent';
+    tag.style.border = '1px solid #2a2f4a';
+  }
+  note.textContent = r.reason_order1 || '—';
+
+  const bias = document.getElementById('biasBanner');
+  if (r.position_flip) {
+    bias.className = 'bias-banner flip';
+    bias.textContent = `⚠ POSITION BIAS DETECTED — the judge picked ${r.order1_winner} when A was shown first, but ${r.order2_winner} when B was shown first. The verdict above falls back to averaged dimension totals; treat it as weak. This flip is itself a finding about judge reliability on this input.`;
+  } else {
+    bias.className = 'bias-banner clean';
+    bias.textContent = `✓ ORDER-STABLE — the judge reached the same verdict in both presentation orders (A-first and B-first, identities masked). Position bias not detected on this input.`;
+  }
+
+  const container = document.getElementById('abRowsContainer');
+  container.innerHTML = '';
+  r.per_dimension.forEach(d => {
+    let deltaCls = 'tie', deltaTxt = 'EVEN';
+    if (d.delta > 0)      { deltaCls = 'a-wins'; deltaTxt = `A +${d.delta}`; }
+    else if (d.delta < 0) { deltaCls = 'b-wins'; deltaTxt = `B +${Math.abs(d.delta)}`; }
+
+    const row = document.createElement('div');
+    row.className = 'ab-row';
+    row.innerHTML = `
+      <div class="ab-row-top">
+        <span class="ab-dim-name" style="color:${d.color}">${d.name}</span>
+        <span class="ab-delta ${deltaCls}">${deltaTxt}</span>
+      </div>
+      <div class="ab-bars">
+        <span class="ab-bar-label" style="color:#38c9e8">A</span>
+        <div class="ab-bar-wrap"><div class="ab-bar-fill" style="width:0%;background:#38c9e8"></div></div>
+        <span class="ab-bar-num" style="color:#38c9e8">${d.a}</span>
+        <span class="ab-bar-label" style="color:#9b7bff">B</span>
+        <div class="ab-bar-wrap"><div class="ab-bar-fill b" style="width:0%;background:#9b7bff"></div></div>
+        <span class="ab-bar-num" style="color:#9b7bff">${d.b}</span>
+      </div>
+    `;
+    container.appendChild(row);
     requestAnimationFrame(() => {
       setTimeout(() => {
-        card.querySelector('.score-bar-fill').style.width = pct + '%';
+        const fills = row.querySelectorAll('.ab-bar-fill');
+        fills[0].style.width = (d.a / 10) * 100 + '%';
+        fills[1].style.width = (d.b / 10) * 100 + '%';
       }, 100);
     });
   });
 
-  document.getElementById('results').classList.add('visible');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  renderCaveats(r.position_flip
+    ? [`Position bias on this input: winner flipped with presentation order. Any single-order A/B comparison of these two responses would have been misleading.`]
+    : []);
+  showResults();
 }
 
-// ── EXPORT ────────────────────────────────────────────────────────
+function showResults() {
+  const res = document.getElementById('results');
+  res.classList.add('visible');
+  document.getElementById('sessionCount').textContent = `${sessionLog.length} eval${sessionLog.length === 1 ? '' : 's'} this session`;
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── SESSION / EXPORT ─────────────────────────────────────────────
+function makeSessionRow(r) {
+  // One flat row per eval — usable directly as an eval-dataset record.
+  const base = { evalcard_version: '2.0', mode: r.mode, judge_model: r.model, timestamp: r.timestamp };
+  if (r.mode === 'ab') {
+    return { ...base, input: r.prompt, output_a: r.output_a, output_b: r.output_b,
+             reference: r.reference || null, winner: r.winner,
+             position_flip: r.position_flip, total_a: r.total_a, total_b: r.total_b,
+             per_dimension: r.per_dimension.map(d => ({ dimension: d.id, a: d.a, b: d.b, delta: d.delta })) };
+  }
+  const dims = r.mode === 'trace' ? TRACE_DIMENSIONS : DIMENSIONS;
+  const row = { ...base,
+    input: r.mode === 'trace' ? r.goal : r.prompt,
+    output: r.mode === 'trace' ? r.trace : r.output,
+    reference: r.reference || null,
+    total: dims.reduce((s, d) => s + (r.scores[d.id]?.score || 0), 0),
+    grade: r.scores.grade || null,
+    scores: {}, caveats: r.scores.caveats || []
+  };
+  dims.forEach(d => { row.scores[d.id] = r.scores[d.id]?.score ?? null; });
+  if (r.mode === 'trace') row.step_flags = r.scores.step_flags || [];
+  if (r.consistency_pass) {
+    row.consistency = {};
+    dims.forEach(d => { row.consistency[d.id] = r.consistency_pass[d.id]?.score ?? null; });
+  }
+  return row;
+}
+
 function exportJSON() {
   if (!lastResult) return;
-  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+  downloadBlob(JSON.stringify(lastResult, null, 2), `evalcard-${lastResult.mode}-${Date.now()}.json`, 'application/json');
+}
+
+function exportJSONL() {
+  if (!sessionLog.length) { showError('No evals in this session yet. Run at least one eval first.'); return; }
+  const jsonl = sessionLog.map(r => JSON.stringify(r)).join('\n') + '\n';
+  downloadBlob(jsonl, `evalcard-session-${Date.now()}.jsonl`, 'application/x-ndjson');
+}
+
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `evalcard-${Date.now()}.json`;
-  a.click();
+  a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
 function exportMarkdown() {
   if (!lastResult) return;
-  const { scores, timestamp } = lastResult;
-  const total = DIMENSIONS.reduce((s, d) => s + (scores[d.id]?.score || 0), 0);
+  let md = `# EVALCARD Report (v2)\n\n**Mode:** ${lastResult.mode}  \n**Judge model:** ${lastResult.model}  \n**Timestamp:** ${lastResult.timestamp}\n\n`;
 
-  let md = `# EVALCARD Report\n\n`;
-  md += `**Model:** ${lastResult.model}  \n`;
-  md += `**Timestamp:** ${timestamp}\n\n`;
-  md += `## Overall Score: ${total}/50 — ${scores.grade}\n\n`;
-  md += `> ${scores.verdict}\n\n`;
-  md += `## Dimension Scores\n\n`;
-  md += `| Dimension | Score |\n|---|---|\n`;
-  DIMENSIONS.forEach(d => {
-    md += `| ${d.name} | ${scores[d.id]?.score || 0}/10 |\n`;
-  });
-  md += `\n## Justifications\n\n`;
-  DIMENSIONS.forEach(d => {
-    md += `**${d.name}:** ${scores[d.id]?.justification || '—'}\n\n`;
-  });
+  if (lastResult.mode === 'ab') {
+    const r = lastResult;
+    md += `## Winner: ${r.winner === 'tie' ? 'Tie' : 'Response ' + r.winner} — ${r.total_a} vs ${r.total_b}\n\n`;
+    md += `**Order stability:** ${r.position_flip ? '⚠ Winner FLIPPED with presentation order (position bias)' : '✓ Same winner in both orders'}\n\n`;
+    md += `| Dimension | A | B | Δ |\n|---|---|---|---|\n`;
+    r.per_dimension.forEach(d => { md += `| ${d.name} | ${d.a} | ${d.b} | ${d.delta > 0 ? '+' + d.delta + ' A' : d.delta < 0 ? '+' + Math.abs(d.delta) + ' B' : '0'} |\n`; });
+    md += `\n> Order 1 (A first) verdict: ${lastResult.reason_order1}\n> Order 2 (B first) verdict: ${lastResult.reason_order2}\n`;
+  } else {
+    const dims = lastResult.mode === 'trace' ? TRACE_DIMENSIONS : DIMENSIONS;
+    const s = lastResult.scores;
+    const total = dims.reduce((sum, d) => sum + (s[d.id]?.score || 0), 0);
+    md += `## Overall Score: ${total}/50 — ${s.grade}\n\n> ${s.verdict}\n\n## Dimension Scores\n\n| Dimension | Score |${lastResult.consistency_pass ? ' 2nd Pass |' : ''}\n|---|---|${lastResult.consistency_pass ? '---|' : ''}\n`;
+    dims.forEach(d => {
+      md += `| ${d.name} | ${s[d.id]?.score || 0}/10 |`;
+      if (lastResult.consistency_pass) md += ` ${lastResult.consistency_pass[d.id]?.score ?? '—'}/10 |`;
+      md += `\n`;
+    });
+    md += `\n## Justifications\n\n`;
+    dims.forEach(d => { md += `**${d.name}:** ${s[d.id]?.justification || '—'}\n\n`; });
+    if (lastResult.mode === 'trace' && (s.step_flags || []).length) {
+      md += `## Flagged Steps\n\n`;
+      s.step_flags.forEach(f => { md += `- **${f.step}:** ${f.issue}\n`; });
+      md += `\n`;
+    }
+    const caveats = collectCaveats(s, lastResult.consistency_pass);
+    if (caveats.length) {
+      md += `## Judge Self-Caveats\n\n`;
+      caveats.forEach(c => { md += `- ${c}\n`; });
+    }
+  }
 
   navigator.clipboard.writeText(md).then(() => {
-    const btn = document.querySelector('.export-btn:nth-child(2)');
+    const btn = document.getElementById('mdBtn');
     btn.textContent = 'Copied! ✓';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy Markdown'; btn.classList.remove('copied'); }, 2000);
@@ -876,9 +1392,11 @@ function exportMarkdown() {
 }
 
 function resetEval() {
-  document.getElementById('promptInput').value = '';
-  document.getElementById('outputInput').value = '';
-  document.getElementById('referenceInput').value = '';
+  ['promptInput','outputInput','referenceInput','traceGoalInput','traceInput','traceRefInput',
+   'abPromptInput','abOutputA','abOutputB','abRefInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   document.getElementById('results').classList.remove('visible');
   lastResult = null;
   hideError();
@@ -891,7 +1409,6 @@ function showError(msg) {
   box.textContent = msg;
   box.classList.add('visible');
 }
-
 function hideError() {
   document.getElementById('errorBox').classList.remove('visible');
 }
